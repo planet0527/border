@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BORDER ARCHIVE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Shippori+Mincho:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme:dark;
+    --void:#08080a;
+    --panel:#101012;
+    --line:#26262a;
+    --ink:#dedcd5;
+    --ash:#8d8c88;
+    --paper:#d6d4cc;
+    --blood:#a3262a;
+    --acc:var(--ash);
+    --serif:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho','Noto Serif CJK JP',Georgia,serif;
+    --dot:'DotGothic16','Hiragino Kaku Gothic ProN','Yu Gothic','Noto Sans CJK JP',monospace;
+    --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--void);color:var(--ink);font-family:var(--serif);}
+  body{min-height:100vh;overflow-x:hidden;-webkit-text-size-adjust:100%;}
+  a{color:inherit;text-decoration:none;}
+  button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;}
+  :focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+  ::selection{background:var(--ink);color:#000;}
+
+  .grain{position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.45;mix-blend-mode:overlay;
+    background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px);}
+  .vignette{position:fixed;inset:0;pointer-events:none;z-index:59;
+    background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.6) 100%);}
+
+  /* ---------- 404 window ---------- */
+  .win{position:relative;background:var(--paper);color:#141414;border:1px solid #000;}
+  .win::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:.9;
+    background:
+      linear-gradient(112deg,transparent 48.7%,rgba(0,0,0,.2) 49%,transparent 49.3%),
+      linear-gradient(64deg,transparent 71.7%,rgba(0,0,0,.16) 72%,transparent 72.3%),
+      linear-gradient(171deg,transparent 28.7%,rgba(0,0,0,.12) 29%,transparent 29.3%);}
+  .win-bar{display:flex;justify-content:space-between;align-items:center;background:#111;color:var(--paper);
+    font-family:var(--dot);font-size:11px;letter-spacing:.06em;padding:4px 8px;}
+  .win-bar .x{width:14px;height:14px;border:1px solid var(--paper);line-height:11px;text-align:center;font-size:11px;}
+  .win-body{padding:16px 14px;position:relative;z-index:1;}
+
+  .btn{display:block;width:100%;text-align:center;border:1px solid var(--ink);padding:13px 18px;font-family:var(--dot);font-size:14px;letter-spacing:.12em;}
+  .btn:hover,.btn:active{background:var(--ink);color:#000;}
+  .btn.ghost{border-color:#555;color:var(--ash);}
+  .btn.inline{display:inline-block;width:auto;}
+
+  .logo-big{position:relative;display:inline-block;margin:6px 0 0;font-family:var(--serif);font-weight:800;
+    font-size:clamp(54px,17vw,92px);line-height:1;letter-spacing:.02em;}
+  .logo-big::before,.logo-big::after{content:attr(data-t);position:absolute;left:0;top:0;width:100%;overflow:hidden;}
+  .logo-big::before{clip-path:inset(20% 0 58% 0);transform:translateX(-7px);animation:slice1 3.2s .3s infinite;}
+  .logo-big::after{clip-path:inset(60% 0 20% 0);transform:translateX(8px);color:var(--blood);animation:slice2 3.2s .3s infinite;}
+  @keyframes slice1{0%,12%,100%{transform:translateX(0);opacity:0;}4%{transform:translateX(-14px);opacity:1;}8%{transform:translateX(5px);opacity:1;}}
+  @keyframes slice2{0%,14%,100%{transform:translateX(0);opacity:0;}5%{transform:translateX(16px);opacity:1;}9%{transform:translateX(-4px);opacity:1;}}
+  .tagline{display:flex;align-items:center;gap:10px;margin:14px 0 22px;font-family:var(--mono);font-size:10px;letter-spacing:.28em;color:var(--ash);}
+  .tagline::before,.tagline::after{content:'';flex:1;height:1px;background:var(--line);}
+  .tagline span{white-space:nowrap;}
+
+  /* ---------- GATE ---------- */
+  #gate{position:fixed;inset:0;z-index:100;background:#000;overflow-y:auto;display:none;}
+  #gate.on{display:block;}
+  .gate-in{max-width:420px;margin:0 auto;min-height:100%;padding:44px 24px;display:flex;flex-direction:column;justify-content:center;}
+  .gate-in p{font-size:14px;line-height:2.05;margin:0 0 14px;color:var(--ink);}
+  .gate-in .warn{font-family:var(--mono);font-size:11px;line-height:1.9;color:var(--ash);border-left:2px solid var(--blood);padding-left:12px;margin:10px 0 22px;}
+  .gate-in .issued{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--ash);margin:0 0 20px;}
+  .gate-in .issued b{color:var(--ink);font-weight:400;}
+  .gate-btns{display:flex;flex-direction:column;gap:10px;}
+
+  /* ---------- STAGE (walk) ---------- */
+  #stage{position:fixed;inset:0;z-index:95;background:#000;display:none;}
+  #stage.on{display:block;}
+  #stage .col{position:relative;max-width:560px;height:100%;margin:0 auto;overflow:hidden;touch-action:none;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  #cv,#ov{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  #ov{pointer-events:none;}
+  .rec{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:14px;right:14px;display:flex;justify-content:space-between;
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:#e8e6df;text-shadow:0 0 4px #000;pointer-events:none;}
+  .rec .dot{color:#e02222;animation:blink 1s steps(2) infinite;}
+  @keyframes blink{50%{opacity:.15;}}
+  #sub{position:absolute;left:0;right:0;bottom:24%;text-align:center;padding:0 22px;font-family:var(--serif);font-weight:700;font-size:16px;
+    letter-spacing:.16em;line-height:2;color:#eceae2;text-shadow:0 0 10px #000,0 0 3px #000;opacity:0;transition:opacity .7s;pointer-events:none;}
+  #sub.on{opacity:1;}
+  #sub.red{color:#d63a3a;}
+  #holdhint{position:absolute;left:0;right:0;bottom:11%;text-align:center;pointer-events:none;font-family:var(--dot);font-size:13px;
+    letter-spacing:.18em;color:#d9d7cf;text-shadow:0 0 6px #000;animation:blink 1.8s ease-in-out infinite;}
+  #holdhint.gone{display:none;}
+  .stage-btns{position:absolute;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;
+    font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:#8d8c88;}
+  .stage-btns button{padding:8px 4px;text-decoration:underline;text-underline-offset:3px;}
+  #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;}
+  #stare{position:absolute;inset:0;display:none;background-color:#000;background-repeat:no-repeat;filter:contrast(1.25) saturate(.35);
+    animation:jit .18s steps(2) infinite;}
+  #stare::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.35) 0 2px,transparent 2px 4px),radial-gradient(ellipse at center,transparent 35%,rgba(0,0,0,.85) 100%);}
+  #stare-t{position:absolute;left:0;right:0;bottom:10%;z-index:2;text-align:center;padding:0 18px;font-family:var(--mono);font-size:12px;
+    letter-spacing:.14em;line-height:1.9;color:#e8e6df;text-shadow:0 0 6px #000;}
+  @keyframes jit{0%{transform:translate(0,0) scale(1.02);}50%{transform:translate(-5px,3px) scale(1.04);}100%{transform:translate(4px,-3px) scale(1.02);}}
+
+  /* ---------- HEADER / HUD ---------- */
+  header{position:sticky;top:0;z-index:40;background:rgba(8,8,10,.9);backdrop-filter:blur(6px);}
+  .nav-inner{max-width:760px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .logo{font-family:var(--serif);font-weight:800;font-size:16px;letter-spacing:.1em;}
+  nav.links{display:flex;gap:11px;font-family:var(--dot);font-size:11px;letter-spacing:.04em;color:var(--ash);}
+  nav.links a{padding:6px 0;border-bottom:1px solid transparent;cursor:pointer;}
+  nav.links a.active,nav.links a:hover{color:var(--ink);border-bottom-color:var(--ash);}
+  .hud{background:#0e0e10;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .hud-inner{max-width:760px;margin:0 auto;padding:5px 20px;display:flex;justify-content:space-between;
+    font-family:var(--dot);font-size:11px;letter-spacing:.08em;color:var(--ash);gap:12px;}
+  .hud b{color:var(--ink);font-weight:400;}
+  .hud .watch{color:var(--blood);}
+
+  main{max-width:760px;margin:0 auto;padding:36px 20px 90px;min-height:70vh;}
+  .view{display:none;}
+  .view.active{display:block;animation:fadein .6s ease;}
+  @keyframes fadein{from{opacity:0;}to{opacity:1;}}
+  h2.sec{font-family:var(--dot);font-weight:400;font-size:13px;letter-spacing:.12em;color:var(--ash);
+    margin:0 0 24px;padding-bottom:10px;border-bottom:1px solid var(--line);}
+  .lead{font-size:14px;line-height:2;color:var(--ash);margin:0 0 24px;max-width:50ch;}
+
+  /* ---------- TOP ---------- */
+  .vfile{margin:0 0 26px;}
+  .vfile table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;position:relative;z-index:1;}
+  .vfile td{padding:6px 0;border-bottom:1px solid rgba(0,0,0,.25);}
+  .vfile td:first-child{width:46%;color:#4a4a48;}
+  .vfile td:last-child{font-weight:600;}
+  .vfile tr.hot td:last-child{color:#8e1418;}
+  .vfile .note{margin:12px 0 0;font-family:var(--serif);font-size:13px;line-height:1.9;position:relative;z-index:1;}
+  .vcard{position:relative;width:100%;max-width:420px;margin:0 0 22px;padding:30px 24px 24px;color:#121212;background-color:#d9d6cc;
+    border:7px solid #0d0d0d;overflow:hidden;
+    background-image:radial-gradient(ellipse at 20% 10%,rgba(255,255,255,.35),transparent 60%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");}
+  .vcard::before{content:'';position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(90deg,transparent calc(10% - .5px),rgba(176,24,28,.75) calc(10% - .5px),rgba(176,24,28,.75) calc(10% + .5px),transparent calc(10% + .5px)),
+               linear-gradient(0deg,transparent calc(8% - .5px),rgba(176,24,28,.75) calc(8% - .5px),rgba(176,24,28,.75) calc(8% + .5px),transparent calc(8% + .5px));}
+  .vc-title{position:relative;font-family:var(--serif);font-weight:800;font-size:clamp(38px,12vw,56px);letter-spacing:.18em;line-height:1;margin:6px 0 0 26px;}
+  .vc-sub{position:relative;font-family:var(--serif);font-size:15px;letter-spacing:.7em;margin:12px 0 0 28px;display:flex;align-items:center;gap:12px;}
+  .vc-sub::after{content:'';height:1px;background:#121212;flex:1;opacity:.7;}
+  .vc-txt{position:relative;font-family:var(--serif);font-size:13px;line-height:2;letter-spacing:.14em;margin:22px 0 18px 26px;}
+  .vc-rows{position:relative;margin:0 0 0 26px;display:grid;gap:8px;}
+  .vc-row{display:flex;align-items:baseline;gap:10px;border-bottom:1px solid rgba(18,18,18,.35);padding-bottom:5px;}
+  .vc-row .k{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:#3b3b39;width:9.4em;flex:none;white-space:nowrap;}
+  .vc-row .v{font-family:var(--serif);font-weight:700;font-size:17px;letter-spacing:.14em;}
+  .vc-row.hot .v{color:#8e1418;}
+  .vc-foot{position:relative;display:flex;justify-content:space-between;align-items:flex-end;margin:18px 0 0 26px;gap:14px;}
+  .vc-bar{height:46px;flex:1;max-width:210px;}
+  .vc-nf{font-family:var(--serif);font-size:24px;letter-spacing:.2em;line-height:1.1;text-align:right;}
+  .vc-nf small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;}
+  .vc-stamp{position:absolute;right:8px;top:59%;transform:rotate(-9deg);border:3px double #9b1519;color:#9b1519;padding:6px 14px;
+    font-family:var(--mono);font-weight:700;font-size:17px;letter-spacing:.2em;opacity:0;mix-blend-mode:multiply;pointer-events:none;}
+  .vc-stamp.on{opacity:.88;}
+  .cover{margin:0 0 26px;}
+  .cover img{display:block;width:100%;height:auto;border:1px solid var(--line);}
+  .cover figcaption{margin-top:8px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ash);}
+  .actions{display:flex;flex-direction:column;gap:10px;max-width:360px;}
+
+  .about{font-size:16px;line-height:2.2;max-width:50ch;margin:0;}
+  .about .soft{color:var(--ash);}
+
+  /* ---------- ARCHIVE ---------- */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  @media(min-width:560px){.grid{grid-template-columns:repeat(3,1fr);}}
+  .card{display:block;width:100%;text-align:left;}
+  .card.locked{transform:rotate(1deg);}
+  .card.locked .win-body{text-align:center;padding:18px 8px 14px;}
+  .card .n404{font-family:var(--serif);font-weight:800;font-size:44px;line-height:1;}
+  .card .nf{font-family:var(--mono);font-size:10px;letter-spacing:.14em;margin-top:4px;}
+  .card .cs{font-family:var(--mono);font-size:10px;margin-top:12px;color:#4a4a48;}
+  .card.open{background:var(--panel);border:1px solid var(--acc);padding:0;color:var(--ink);}
+  .card.open .win-bar{background:var(--acc);color:#000;}
+  .card.open .win-body{padding:18px 14px;min-height:104px;display:flex;flex-direction:column;justify-content:space-between;}
+  .card.open .nm{font-family:var(--serif);font-weight:700;font-size:20px;}
+  .card.open .st{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ash);margin-top:12px;}
+  .card.open::after{display:none;}
+
+  /* ---------- RECORD ---------- */
+  .back{font-family:var(--dot);font-size:12px;color:var(--ash);display:inline-block;margin-bottom:20px;cursor:pointer;}
+  .back:hover{color:var(--ink);}
+  .rhead{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:18px;}
+  .rhead .rid{font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--acc);}
+  .rhead h1{margin:8px 0 0;font-size:36px;font-weight:800;}
+  .meta{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-bottom:22px;}
+  .meta tr{border-bottom:1px solid var(--line);}
+  .meta td{padding:9px 0;}
+  .meta td:first-child{width:110px;color:var(--ash);}
+  .frame{position:relative;aspect-ratio:4/3;border:1px solid var(--line);background:#050506;overflow:hidden;
+    touch-action:none;cursor:crosshair;--x:50%;--y:50%;user-select:none;-webkit-user-select:none;}
+  .fl-base{position:absolute;inset:0;background-color:#16161a;background-image:repeating-linear-gradient(135deg,#1a1a1e 0 10px,#141416 10px 20px);}
+  .fl-frag{position:absolute;transform:translate(-50%,-50%);width:max-content;max-width:62%;text-align:center;
+    font-family:var(--dot);font-size:13px;line-height:1.6;color:var(--acc);text-shadow:0 0 6px #000;}
+  .fl-dark{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(circle 90px at var(--x) var(--y),rgba(0,0,0,0) 0,rgba(0,0,0,.25) 45%,rgba(0,0,0,.97) 100%);}
+  .frame.bright .fl-dark{display:none;}
+  .fl-hint{position:absolute;left:0;right:0;bottom:10px;text-align:center;pointer-events:none;
+    font-family:var(--dot);font-size:12px;letter-spacing:.1em;color:var(--ash);animation:blink 2.4s ease-in-out infinite;}
+  .fl-hint.gone{display:none;}
+  .tools{margin:8px 0 22px;display:flex;justify-content:flex-end;}
+  .link{font-family:var(--dot);font-size:11px;color:var(--ash);text-decoration:underline;text-underline-offset:3px;}
+  .desc{font-size:15px;line-height:2.05;max-width:52ch;margin:0;}
+  .lockwin{margin-bottom:22px;}
+  .lockwin .big{font-family:var(--serif);font-weight:800;font-size:56px;line-height:1;margin:0;}
+  .lockwin p{margin:8px 0 0;font-size:13px;line-height:1.9;position:relative;z-index:1;}
+  .lockwin .btn{border-color:#141414;margin-top:14px;position:relative;z-index:1;}
+  .lockwin .btn:hover{background:#141414;color:var(--paper);}
+
+  /* ---------- GOODS ---------- */
+  .goods{list-style:none;margin:0 0 28px;padding:0;border-top:1px solid var(--line);}
+  .goods li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:16px 0;border-bottom:1px solid var(--line);}
+  .goods .gn{font-family:var(--serif);font-weight:700;font-size:18px;}
+  .goods .gp{font-family:var(--serif);font-weight:800;font-size:22px;white-space:nowrap;}
+  .gimg{margin:0 0 28px;}
+  .gimg img{display:block;width:100%;height:auto;border:1px solid var(--line);}
+  .gimg figcaption{margin-top:8px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ash);}
+  .notes{margin:0;padding-left:1.3em;font-size:13px;line-height:2;color:var(--ash);}
+
+  .placeholder{border:1px dashed var(--line);padding:46px 18px;text-align:center;font-family:var(--mono);
+    font-size:12px;line-height:2.1;letter-spacing:.05em;color:var(--ash);}
+  .nf-view{text-align:center;padding-top:30px;}
+  .nf-view .big{font-family:var(--serif);font-weight:800;font-size:88px;line-height:1;margin:0;}
+  .nf-view p{font-family:var(--mono);font-size:12px;color:var(--ash);line-height:2;margin:10px 0 24px;}
+  .nf-view .btn{max-width:260px;margin:0 auto;}
+
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:80;background:#000;border:1px solid var(--ink);
+    padding:9px 16px;font-family:var(--dot);font-size:12px;letter-spacing:.08em;opacity:0;pointer-events:none;transition:opacity .3s;max-width:90vw;}
+  #toast.on{opacity:1;}
+  footer{border-top:1px solid var(--line);padding:24px 20px;text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ash);}
+
+  @media (prefers-reduced-motion:reduce){
+    .logo-big::before,.logo-big::after{animation:none !important;opacity:0;}
+    #stare,.rec .dot,#holdhint,.fl-hint{animation:none !important;}
+    .view.active{animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ GATE ============ -->
+<div id="gate">
+  <div class="gate-in">
+    <h1 class="logo-big" data-t="BORDER">BORDER</h1>
+    <div class="tagline"><span>BETWEEN REALITY AND UNREALITY</span></div>
+    <p>これは、どこかの世界で<br>実際に存在したかもしれない<br>記録の断片です。</p>
+    <p class="issued" id="issued"></p>
+    <div class="warn">音が出ます。イヤホンを推奨します。<br>暗い映像と大きな音があります。<br>苦手な方は「スキップ」から記録庫へ進めます。</div>
+    <div class="gate-btns">
+      <button class="btn" id="go-sound" type="button">音を出して、入る</button>
+      <button class="btn ghost" id="go-mute" type="button">音を出さずに、入る</button>
+      <button class="btn ghost" id="go-skip" type="button">スキップして記録庫へ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ STAGE ============ -->
+<div id="stage" aria-label="廊下を歩く体験">
+  <div class="col" id="col">
+    <canvas id="cv"></canvas>
+    <canvas id="ov"></canvas>
+    <div class="rec"><span><span class="dot">●</span> REC <span id="rec-ts"></span></span><span id="rec-no"></span></div>
+    <div id="sub" role="status" aria-live="polite"></div>
+    <div id="holdhint">画面を押し続けて、進む</div>
+    <div class="stage-btns"><button type="button" id="st-skip">スキップ</button><button type="button" id="st-mute">音 ON</button></div>
+    <div id="stare"><div id="stare-t">YOU HAVE ALREADY<br>CROSSED THE BORDER.</div></div>
+    <div id="flash"></div>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+<div class="grain"></div><div class="vignette"></div>
+
+<header>
+  <div class="nav-inner">
+    <div class="logo">BORDER</div>
+    <nav class="links">
+      <a data-route="top">TOP</a>
+      <a data-route="about">ABOUT</a>
+      <a data-route="archive">ARCHIVE</a>
+      <a data-route="goods">GOODS</a>
+      <a data-route="after">AFTER</a>
+    </nav>
+  </div>
+  <div class="hud"><div class="hud-inner">
+    <span class="watch">監視中 UNDER SURVEILLANCE</span>
+    <span id="hud-r"></span>
+  </div></div>
+</header>
+
+<main>
+
+  <section class="view" id="view-top">
+    <h1 class="logo-big" data-t="BORDER">BORDER</h1>
+    <div class="tagline"><span>BETWEEN REALITY AND UNREALITY</span></div>
+    <p class="lead" id="top-lead"></p>
+
+    <div class="vcard" id="vcard">
+      <div class="vc-title">BORDER</div>
+      <div class="vc-sub">ACCESS</div>
+      <p class="vc-txt">これは、どこかの世界で<br>実際に存在したかもしれない<br>記録の断片です。</p>
+      <div class="vc-rows" id="vc-rows"></div>
+      <div class="vc-stamp" id="vc-stamp">RECORDED</div>
+      <div class="vc-foot"><svg class="vc-bar" id="vc-bar" preserveAspectRatio="none" aria-hidden="true"></svg><div class="vc-nf">404<small>Not Found</small></div></div>
+    </div>
+    <p class="lead" id="vfile-note"></p>
+
+    <figure class="cover"><img src="img/cover.jpg" alt="BORDER ― 異空間の中に立つ少女のイラスト" onerror="this.parentNode.style.display='none'"><figcaption>現実と非現実のあいだで、</figcaption></figure>
+
+    <div class="actions">
+      <a class="btn" data-route="archive">記録庫を見る</a>
+      <button class="btn ghost" id="replay" type="button">もう一度、歩く</button>
+    </div>
+  </section>
+
+  <section class="view" id="view-about">
+    <h2 class="sec">ABOUT</h2>
+    <p class="about">
+      現実と非現実。<br>平面と立体。<br>人間と、そうではないもの。<br><br>
+      <span class="soft">私たちはいつから、<br>「こちら側」にいるのでしょうか。</span><br><br>
+      BORDERは、バックルームをモチーフに、さまざまな"境界"を表現した作品群です。<br>
+      2Dのキャラクターが、写実的な異空間の中に存在している。その違和感こそが、この作品の中心にあります。<br><br>
+      <span class="soft">ここに並ぶ記録は、その世界の一部を切り取ったものです。<br>
+      すべてを説明するつもりはありません。<br>欠けたまま、持ち帰ってください。</span>
+    </p>
+  </section>
+
+  <section class="view" id="view-archive">
+    <h2 class="sec">ARCHIVE — RECOVERED RECORDS</h2>
+    <p class="lead">回収された記録です。<br>暗い画面を指でなぞると、文字が浮かびます。</p>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="view" id="view-record">
+    <a class="back" data-route="archive">← ARCHIVEへ戻る</a>
+    <div class="rhead"><div class="rid" id="r-id"></div><h1 id="r-name"></h1></div>
+    <table class="meta" id="r-meta"></table>
+    <div id="r-body"></div>
+  </section>
+
+  <section class="view" id="view-goods">
+    <h2 class="sec">GOODS</h2>
+    <p class="lead">展示会場で販売しています。<br>なくなり次第、終了です。</p>
+    <ul class="goods">
+      <li><span class="gn">クリアファイル</span><span class="gp">¥500</span></li>
+      <li><span class="gn">アンブレラマーカー</span><span class="gp">¥500</span></li>
+      <li><span class="gn">ステッカー</span><span class="gp">¥400</span></li>
+      <li><span class="gn">手描きポストカード</span><span class="gp">¥500</span></li>
+    </ul>
+    <figure class="gimg"><img src="img/stickers.jpg" alt="ステッカーのデザイン" loading="lazy" onerror="this.parentNode.style.display='none'"><figcaption>ステッカー</figcaption></figure>
+    <ul class="notes">
+      <li>お支払いは現金のみです。</li>
+      <li>不良品以外の返品・交換はできません。</li>
+      <li>画像はイメージです。実物と色味が異なる場合があります。</li>
+    </ul>
+  </section>
+
+  <section class="view" id="view-after">
+    <h2 class="sec">AFTER BORDER</h2>
+    <div class="placeholder">展示終了後、ここに展示風景・制作過程・新しい記録が追加されます。<br><br>NOW LOADING — PLEASE WAIT.</div>
+  </section>
+
+  <section class="view" id="view-nf">
+    <div class="nf-view">
+      <p class="big">404</p>
+      <p>NOT FOUND<br>この記録は存在しないか、すでに失われています。</p>
+      <a class="btn" data-route="archive">ARCHIVEへ戻る</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>BORDER EXHIBITION 2026.10 — IN OUR UNIVERSITY</footer>
+
+<script src="three.min.js"></script>
+<script>window.THREE||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>')</script>
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+const CONFIG = { STORE_KEY:'border_archive_v3', CORRIDOR_LEN:44, SPEED:1.3 };
+
+/* 暗闇に浮かぶ文は frags。作品画像を使うなら img に 'img/xxx.jpg' を指定(後から差し替え可) */
+const RECORDS = [
+  {id:'REC_001', name:'POOL',      accent:'#5aa9c9', location:'UNKNOWN',   entity:'UNCONFIRMED', status:'STABLE',          date:'████/██/██',
+   desc:'水面はどこまでも静かだった。ここには誰もいないはずなのに、塩素の匂いだけが新しい。',
+   frags:[{t:'水温 : 測定不能',x:30,y:28},{t:'足音は、あなたのものだけではない',x:68,y:62},{t:'深さ : ???',x:28,y:80}]},
+  {id:'REC_002', name:'WARD',      accent:'#a2a29e', location:'FLOOR B2',  entity:'DETECTED',    status:'SIGNAL LOST',     date:'████/██/██',
+   desc:'蛍光灯が等間隔で点滅する廊下。ナースステーションに人はいないが、記録簿だけが更新され続けている。',
+   frags:[{t:'面会は終了しました',x:32,y:26},{t:'カルテは今も更新されている',x:66,y:55},{t:'B2 に病室はない',x:34,y:82}]},
+  {id:'REC_003', name:'LEVEL ???', accent:'#c9a44a', location:'UNKNOWN',   entity:'UNKNOWN',     status:'DATA CORRUPTED',  date:'████/██/██',
+   desc:'黄ばんだ壁紙と湿った絨毯の匂い。同じ角を何度曲がっても、出口の表示だけが遠ざかっていく。',
+   frags:[{t:'この角は、もう三回曲がった',x:50,y:22},{t:'壁紙は湿っている',x:26,y:60},{t:'EXIT',x:76,y:78}]},
+  {id:'REC_004', name:'SMILE?',    accent:'#c0393d', location:'UNKNOWN',   entity:'DETECTED',    status:'DO NOT APPROACH', date:'████/██/██',
+   desc:'記録された表情は、笑っているようにも見える。しかし観測者の証言は、そのたびに少しずつ食い違っている。',
+   frags:[{t:'笑っているように見える',x:34,y:30},{t:'証言はそのたびに食い違う',x:68,y:58},{t:'目を合わせてはいけない',x:36,y:84}]},
+  {id:'REC_005', name:'UNKNOWN',   accent:'#a8479b', location:'CLASSIFIED',entity:'CLASSIFIED',  status:'ACCESS RESTRICTED',date:'████/██/██',
+   desc:'この記録の大部分は破損している。断片からは、何か大きなものの輪郭だけが読み取れる。',
+   frags:[{t:'████ ████ ████',x:30,y:30},{t:'DATA CORRUPTED',x:70,y:50},{t:'大きな何かの輪郭',x:34,y:80}]},
+  {id:'SECRET',  name:'404 FOUND', accent:'#d6d4cc', location:'REDACTED',  entity:'REDACTED',    status:'CLASSIFIED',      date:'REDACTED', secret:true,
+   desc:'ここまで歩いてきたあなたへ。404 NOT FOUND ではなく、404 FOUND。あなたは、すでに記録されている。',
+   frags:[{t:'あなたは、ここまで来た',x:50,y:24},{t:'YOU HAVE ALREADY CROSSED THE BORDER.',x:50,y:56},{t:'もう、戻れない',x:50,y:84}]}
+];
+
+/* ============================================================
+   UTIL / STORE
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RM = (()=>{ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } })();
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const pad2 = n => String(n).padStart(2,'0');
+const pad3 = n => String(n).padStart(3,'0');
+const byId = id => RECORDS.find(r => r.id === id);
+
+const store = {
+  data:{visitor:null, entered:0, crossed:false, duration:0},
+  load(){ try{ const s = localStorage.getItem(CONFIG.STORE_KEY); if(s){ const d = JSON.parse(s); if(d && typeof d==='object') Object.assign(this.data, d); } }catch(e){} },
+  save(){ try{ localStorage.setItem(CONFIG.STORE_KEY, JSON.stringify(this.data)); }catch(e){} }
+};
+const visitorNo = () => store.data.visitor ? pad3(store.data.visitor) : '---';
+const isUnlocked = r => r.secret ? !!store.data.crossed : true;
+const fmtDate = ms => { const d = new Date(ms); return d.getFullYear() + '.' + pad2(d.getMonth()+1) + '.' + pad2(d.getDate()); };
+const fmtTime = ms => { const d = new Date(ms); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); };
+const fmtDur = s => pad2(Math.floor(s/60)) + ':' + pad2(Math.floor(s%60));
+
+let toastTimer;
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('on'),2400); }
+
+/* ============================================================
+   SITE (views)
+   ============================================================ */
+function updateHud(){ $('hud-r').innerHTML = 'No.<b>' + esc(visitorNo()) + '</b>' + (store.data.crossed ? ' / <b>RECORDED</b>' : ''); }
+
+function barcodeSvg(seed){
+  let x = 0, out = '', n = (seed|0) * 2654435761 >>> 0 || 7;
+  const rnd2 = () => { n ^= n << 13; n >>>= 0; n ^= n >>> 17; n ^= n << 5; n >>>= 0; return n / 4294967296; };
+  while(x < 300){ const w = 1 + Math.floor(rnd2()*4); if(rnd2() > 0.38) out += '<rect x="'+x+'" y="0" width="'+w+'" height="40" fill="#121212"/>'; x += w + 1 + Math.floor(rnd2()*3); }
+  return out;
+}
+function renderTop(){
+  const d = store.data, crossed = !!d.crossed, loc = d.loc ? d.loc : '███████';
+  const rows = [
+    ['VISITOR No.', visitorNo(), false],
+    ['DATE', d.entered ? fmtDate(d.entered) : '----.--.--', false],
+    ['ENTRY', d.entered ? fmtTime(d.entered) : '--:--', false],
+    ['LOCATION', loc, false],
+    ['TIME IN', crossed ? fmtDur(d.duration || 0) : '--:--', false],
+    ['LEVEL', crossed ? '???' : '0+', crossed],
+    ['ENTITY', crossed ? '0 m' : '??? m', crossed]
+  ];
+  $('vc-rows').innerHTML = rows.map(r => '<div class="vc-row'+(r[2]?' hot':'')+'"><span class="k">'+esc(r[0])+'</span><span class="v">'+esc(r[1])+'</span></div>').join('');
+  $('vc-stamp').classList.toggle('on', crossed);
+  $('vc-bar').setAttribute('viewBox','0 0 300 40'); $('vc-bar').innerHTML = barcodeSvg(d.visitor || 1);
+  $('top-lead').textContent = crossed
+    ? 'あなたは、境界を越えました。この入場記録が、その証拠です。'
+    : '入場記録です。まだ、奥まで歩いていません。';
+  $('vfile-note').textContent = crossed
+    ? 'この画面をスクリーンショットで持ち帰れます。ARCHIVEの封鎖された記録も開きました。'
+    : '「もう一度、歩く」から、廊下の奥まで進めます。';
+}
+
+function renderArchive(){
+  $('grid').innerHTML = RECORDS.map(r => {
+    if(isUnlocked(r)){
+      return '<button class="win card open" style="--acc:'+r.accent+'" data-rec="'+r.id+'">' +
+        '<div class="win-bar"><span>'+r.id+'</span><span class="x">×</span></div>' +
+        '<div class="win-body"><div class="nm">'+esc(r.name)+'</div><div class="st">'+esc(r.status)+'</div></div></button>';
+    }
+    return '<button class="win card locked" data-rec="'+r.id+'">' +
+      '<div class="win-bar"><span>SECRET</span><span class="x">×</span></div>' +
+      '<div class="win-body"><div class="n404">404</div><div class="nf">Not Found</div><div class="cs">████████</div></div></button>';
+  }).join('');
+  $('grid').querySelectorAll('.card').forEach(el => el.addEventListener('click', () => goTo('record', el.dataset.rec)));
+}
+
+function renderRecord(id){
+  const r = byId(id);
+  if(!r){ goTo('nf'); return; }
+  const un = isUnlocked(r);
+  $('r-id').textContent = r.id; $('r-id').style.color = r.accent;
+  $('r-name').textContent = un ? r.name : '████████';
+  const red = '<span style="background:#1c1c1e;color:#1c1c1e;user-select:none;">██████</span>';
+  $('r-meta').innerHTML = un
+    ? '<tr><td>LOCATION</td><td>'+esc(r.location)+'</td></tr><tr><td>ENTITY</td><td>'+esc(r.entity)+'</td></tr><tr><td>STATUS</td><td>'+esc(r.status)+'</td></tr><tr><td>DATE</td><td>'+esc(r.date)+'</td></tr>'
+    : '<tr><td>LOCATION</td><td>'+red+'</td></tr><tr><td>ENTITY</td><td>'+red+'</td></tr><tr><td>STATUS</td><td>LOCKED</td></tr><tr><td>DATE</td><td>'+red+'</td></tr>';
+  const body = $('r-body'); body.innerHTML = '';
+  if(!un){
+    const w = document.createElement('div'); w.className = 'win lockwin';
+    w.innerHTML = '<div class="win-bar"><span>SECRET</span><span class="x">×</span></div><div class="win-body"><p class="big">404</p><p>Not Found — この記録は封鎖されています。<br>廊下の奥まで歩いた人にだけ、開かれます。</p><button class="btn" type="button">廊下を歩く</button></div>';
+    w.querySelector('.btn').addEventListener('click', () => startFlow(true));
+    body.appendChild(w);
+    return;
+  }
+  const frame = document.createElement('div'); frame.className = 'frame'; frame.style.setProperty('--acc', r.accent);
+  const base = document.createElement('div'); base.className = 'fl-base'; frame.appendChild(base);
+  r.frags.forEach(f => { const s = document.createElement('div'); s.className='fl-frag'; s.textContent=f.t; s.style.left=f.x+'%'; s.style.top=f.y+'%'; frame.appendChild(s); });
+  const dark = document.createElement('div'); dark.className='fl-dark'; frame.appendChild(dark);
+  const hint = document.createElement('div'); hint.className='fl-hint'; hint.textContent='指でなぞって、照らす'; frame.appendChild(hint);
+  body.appendChild(frame);
+  const tools = document.createElement('div'); tools.className='tools';
+  const tg = document.createElement('button'); tg.className='link'; tg.type='button'; tg.textContent='見えにくい場合:全体を表示';
+  tg.addEventListener('click', () => { const b = frame.classList.toggle('bright'); tg.textContent = b ? '暗闇に戻す' : '見えにくい場合:全体を表示'; });
+  tools.appendChild(tg); body.appendChild(tools);
+  const d = document.createElement('p'); d.className='desc'; d.textContent = r.desc; body.appendChild(d);
+  const move = e => {
+    const b = frame.getBoundingClientRect();
+    frame.style.setProperty('--x', (e.clientX - b.left) + 'px'); frame.style.setProperty('--y', (e.clientY - b.top) + 'px');
+    hint.classList.add('gone');
+  };
+  frame.onpointermove = move; frame.onpointerdown = move;
+}
+
+const VIEWS = ['top','about','archive','goods','record','after','nf'];
+function goTo(route, recId){
+  if(!VIEWS.includes(route)) route = 'nf';
+  if(route === 'record' && !recId) route = 'archive';
+  if(route === 'top') renderTop();
+  if(route === 'archive') renderArchive();
+  if(route === 'record') renderRecord(recId);
+  VIEWS.forEach(v => $('view-'+v).classList.toggle('active', v === route));
+  document.querySelectorAll('nav.links a').forEach(a => a.classList.toggle('active', a.dataset.route === route));
+  updateHud();
+  try{ window.scrollTo(0,0); }catch(e){}
+  try{ history.replaceState(null,'','#' + route + (recId ? '/' + recId : '')); }catch(e){}
+}
+document.querySelectorAll('[data-route]').forEach(el => el.addEventListener('click', () => goTo(el.dataset.route)));
+
+/* ============================================================
+   AUDIO ― Web Audio で合成(音源ファイル不要)
+   録音物に近づけるため、①廊下の残響(インパルス応答を生成) ②靴底・かかと・床の三層の足音
+   ③蛍光灯の実動作(リレー音・安定器のバズ) ④金属ダクトの倍音 ⑤コンプレッサ+高域カット で組む。
+   ============================================================ */
+function makeIR(ctx, dur){
+  const sr = ctx.sampleRate, n = Math.floor(sr*dur), buf = ctx.createBuffer(2, n, sr);
+  for(let c=0;c<2;c++){
+    const d = buf.getChannelData(c); let y = 0;
+    for(let i=0;i<n;i++){
+      const t = i/sr, env = Math.exp(-t*3.1);                          // 残響時間 約2.2秒
+      const a = Math.max(0.03, 0.55*Math.exp(-t*1.6));                 // 高域ほど早く減衰
+      y += ((Math.random()*2-1) - y) * a;
+      d[i] = y * env * (i < sr*0.01 ? i/(sr*0.01) : 1);
+    }
+    [[0.017,.55],[0.029,.42],[0.046,.34],[0.071,.24],[0.104,.16]].forEach(([tt,g],k) => {   // 壁の初期反射
+      const idx = Math.floor((tt + (c ? 0.0035*(k+1) : 0))*sr); if(idx < n) d[idx] += g*(c ? -0.8 : 1);
+    });
+  }
+  return buf;
+}
+const AU = {
+  ctx:null, master:null, bus:null, wetIn:null, noiseBuf:null, brownBuf:null, on:false, muted:false, humG:null, rumG:null, airG:null,
+  init(ctxOverride){
+    if(this.on && !ctxOverride){ this.resume(); return; }
+    try{
+      const C = window.AudioContext || window.webkitAudioContext; if(!C && !ctxOverride) return;
+      const ctx = this.ctx = ctxOverride || new C(), sr = ctx.sampleRate;
+      // ノイズ素材(白・ブラウン)
+      const len = sr*3; this.noiseBuf = ctx.createBuffer(1,len,sr); this.brownBuf = ctx.createBuffer(1,len,sr);
+      const w = this.noiseBuf.getChannelData(0), br = this.brownBuf.getChannelData(0); let last = 0;
+      for(let i=0;i<len;i++){ const x = Math.random()*2-1; w[i] = x; last = (last + 0.02*x)/1.02; br[i] = last*3.5; }
+      // マスター:コンプ → 高域カット
+      this.master = ctx.createGain(); this.master.gain.value = 0.9;
+      const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -20; comp.knee.value = 24; comp.ratio.value = 5; comp.attack.value = 0.004; comp.release.value = 0.25;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7500; lp.Q.value = 0.5;
+      this.bus = ctx.createGain(); this.bus.connect(comp); comp.connect(lp); lp.connect(this.master); this.master.connect(ctx.destination);
+      // 残響(廊下)
+      const pre = ctx.createDelay(0.1); pre.delayTime.value = 0.015;
+      const conv = ctx.createConvolver(); conv.buffer = makeIR(ctx, 2.6);
+      const rg = ctx.createGain(); rg.gain.value = 0.85;
+      this.wetIn = pre; pre.connect(conv); conv.connect(rg); rg.connect(comp);
+      // 蛍光灯のハム(100Hz+倍音。バズは小さく)
+      this.humG = ctx.createGain(); this.humG.gain.value = 0;
+      const humLP = ctx.createBiquadFilter(); humLP.type = 'lowpass'; humLP.frequency.value = 1100;
+      [[100,0.5],[100.4,0.28],[200,0.22],[300,0.16],[500,0.06]].forEach(([f,g]) => { const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f; const gg = ctx.createGain(); gg.gain.value = g; o.connect(gg); gg.connect(humLP); o.start(); });
+      const bz = ctx.createBufferSource(); bz.buffer = this.noiseBuf; bz.loop = true;
+      const bzf = ctx.createBiquadFilter(); bzf.type = 'bandpass'; bzf.frequency.value = 2800; bzf.Q.value = 1.5;
+      const bzg = ctx.createGain(); bzg.gain.value = 0.012; bz.connect(bzf); bzf.connect(bzg); bzg.connect(humLP); bz.start();
+      humLP.connect(this.humG); this.humG.connect(this.bus);
+      // 換気の空気音(ゆっくり揺れる)
+      this.airG = ctx.createGain(); this.airG.gain.value = 0;
+      const air = ctx.createBufferSource(); air.buffer = this.brownBuf; air.loop = true;
+      const airF = ctx.createBiquadFilter(); airF.type = 'lowpass'; airF.frequency.value = 520;
+      const lfo = ctx.createOscillator(); lfo.frequency.value = 0.07; const lg = ctx.createGain(); lg.gain.value = 140; lfo.connect(lg); lg.connect(airF.frequency); lfo.start();
+      air.connect(airF); airF.connect(this.airG); this.airG.connect(this.bus);
+      const aw = ctx.createGain(); aw.gain.value = 0.3; this.airG.connect(aw); aw.connect(this.wetIn); air.start();
+      // 低域の唸り(サイン・三角のみ。スマホ用に倍音も)
+      this.rumG = ctx.createGain(); this.rumG.gain.value = 0;
+      const rlp = ctx.createBiquadFilter(); rlp.type = 'lowpass'; rlp.frequency.value = 160;
+      [[41,'sine',1],[82.5,'triangle',0.35]].forEach(([f,t,g]) => { const o = ctx.createOscillator(); o.type = t; o.frequency.value = f; const gg = ctx.createGain(); gg.gain.value = g; o.connect(gg); gg.connect(rlp); o.start(); });
+      rlp.connect(this.rumG); this.rumG.connect(this.bus);
+      this.on = true;
+    }catch(e){ this.on = false; }
+  },
+  resume(){ try{ if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }catch(e){} },
+  setMuted(m){ this.muted = m; try{ if(this.master) this.master.gain.value = m ? 0 : 0.9; }catch(e){} },
+  level(rum, hum, air){
+    if(!this.on) return; const t = this.ctx.currentTime;
+    this.rumG.gain.setTargetAtTime(rum, t, 0.5); this.humG.gain.setTargetAtTime(hum, t, 0.02); this.airG.gain.setTargetAtTime(air, t, 0.6);
+  },
+  now(d){ return this.ctx.currentTime + (d || 0); },
+  // 出力:ドライ+残響送り+パン+任意のローパス
+  _out(node, o){
+    const ctx = this.ctx; o = o || {};
+    let n = node;
+    if(o.lp){ const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; n.connect(f); n = f; }
+    const dg = ctx.createGain(); dg.gain.value = (o.dry === undefined ? 1 : o.dry); n.connect(dg);
+    let d = dg;
+    if(ctx.createStereoPanner){ const p = ctx.createStereoPanner(); p.pan.value = o.pan || 0; dg.connect(p); d = p; }
+    d.connect(this.bus);
+    if(o.wet){ const wg = ctx.createGain(); wg.gain.value = o.wet; n.connect(wg); wg.connect(this.wetIn); }
+  },
+  _burst(t, dur, type, freq, q, vol, o){
+    const ctx = this.ctx, s = ctx.createBufferSource(); s.buffer = this.noiseBuf;
+    const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); this._out(g, o); s.start(t, Math.random()*1.5); s.stop(t + dur + 0.05);
+  },
+  _thump(t, f0, f1, dur, vol, o){
+    const ctx = this.ctx, os = ctx.createOscillator(), g = ctx.createGain(); os.type = 'sine';
+    os.frequency.setValueAtTime(f0, t); os.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    os.connect(g); this._out(g, o); os.start(t); os.stop(t + dur + 0.05);
+  },
+  _ring(t, freqs, dur, vol, o){                                    // 金属ダクトを叩いたような倍音
+    const ctx = this.ctx;
+    freqs.forEach((f,i) => {
+      const os = ctx.createOscillator(), g = ctx.createGain(); os.type = 'sine'; os.frequency.value = f*(1 + (Math.random()-0.5)*0.01);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol/(1+i*0.6), t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + dur*(1 - i*0.18));
+      os.connect(g); this._out(g, o); os.start(t); os.stop(t + dur + 0.05);
+    });
+  },
+  // 足音:かかと・体重・靴底の三層。own=自分(近い)、false=もう一人(遠く、硬い靴)
+  step(own, delay){
+    if(!this.on) return;
+    const t = this.now(delay) + 0.003, r = () => 0.88 + Math.random()*0.24;
+    if(own){
+      const v = r();
+      this._burst(t, 0.018, 'bandpass', 1500*r(), 1.0, 0.2*v, {wet:0.24, lp:3200});
+      this._thump(t, 112*r(), 52, 0.12, 0.5*v, {wet:0.2});
+      this._burst(t + 0.03, 0.08, 'bandpass', 700*r(), 0.9, 0.17*v, {wet:0.24, lp:2200});
+      if(Math.random() < 0.14) this._thump(t + 0.05, 2300, 3100, 0.05, 0.03, {wet:0.2});
+    } else {
+      const v = r()*0.6, pan = (Math.random() < 0.5 ? -0.55 : 0.55);
+      this._burst(t, 0.014, 'bandpass', 2200*r(), 1.2, 0.34*v, {dry:0.8, wet:0.65, pan, lp:2600});
+      this._thump(t, 105*r(), 58, 0.1, 0.34*v, {dry:0.8, wet:0.5, pan, lp:600});
+      this._burst(t + 0.025, 0.06, 'bandpass', 850*r(), 0.9, 0.14*v, {dry:0.8, wet:0.6, pan, lp:1600});
+    }
+  },
+  beat(delay){                                                       // 心音:lub-dub
+    if(!this.on) return; const t = this.now(delay), o = {wet:0.06, lp:300};
+    this._thump(t, 78, 44, 0.16, 1.0, o); this._burst(t, 0.07, 'lowpass', 180, 0.7, 0.45, o);
+    this._thump(t + 0.26, 88, 48, 0.13, 0.62, o); this._burst(t + 0.26, 0.05, 'lowpass', 200, 0.7, 0.28, o);
+  },
+  tick(isOn){                                                        // 蛍光灯のリレー/安定器の音
+    if(!this.on) return; const t = this.now(0);
+    this._burst(t, 0.006, 'bandpass', 3300, 1.5, 0.38, {wet:0.25});
+    if(isOn) this._burst(t + 0.01, 0.08, 'bandpass', 2600, 1.2, 0.1, {wet:0.2});
+  },
+  impact(power, delay){                                              // 重い衝撃(ブラックアウト)
+    if(!this.on) return; const t = this.now(delay), p = power || 1;
+    this._thump(t, 95, 27, 0.8, 0.9*p, {wet:0.5});
+    this._burst(t, 0.3, 'lowpass', 300, 0.7, 0.5*p, {wet:0.7});
+    this._ring(t, [183, 291, 433], 1.7, 0.06*p, {dry:0.6, wet:0.9});
+  },
+  powerDown(){                                                       // 蛍光灯が消える:リレー音 → 低い衝撃
+    if(!this.on) return; const t = this.now(0);
+    this._burst(t, 0.006, 'bandpass', 3500, 1.5, 0.6, {wet:0.25}); this._burst(t + 0.014, 0.004, 'bandpass', 1800, 1.5, 0.35, {wet:0.25});
+    this.impact(0.8, 0.1);
+  },
+  knock(pan){                                                        // 遠くでダクトを叩く音
+    if(!this.on) return; const t = this.now(0), o = {dry:0.5, wet:0.9, pan:pan || 0, lp:1400};
+    this._burst(t, 0.012, 'bandpass', 900, 1, 0.3, o); this._ring(t, [262, 391, 552], 1.2, 0.2, o);
+  },
+  farDoor(pan){                                                      // 遠くで扉が閉まる音
+    if(!this.on) return; const t = this.now(0), o = {dry:0.45, wet:0.95, pan:pan || 0, lp:700};
+    this._thump(t, 84, 40, 0.3, 0.5, o); this._burst(t, 0.2, 'lowpass', 600, 0.8, 0.3, o);
+  },
+  creak(delay){                                                      // 軋み:スティックスリップ摩擦+共鳴
+    if(!this.on) return; const ctx = this.ctx, t = this.now(delay || 0), dur = 1.7;
+    const os = ctx.createOscillator(); os.type = 'sawtooth'; os.frequency.setValueAtTime(96, t); os.frequency.linearRampToValueAtTime(158, t + dur);
+    const f1 = ctx.createBiquadFilter(); f1.type = 'bandpass'; f1.frequency.value = 520; f1.Q.value = 5;
+    const f2 = ctx.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.value = 1500; f2.Q.value = 7;
+    const mix = ctx.createGain(); mix.gain.value = 1; const g = ctx.createGain(); g.gain.value = 0;
+    os.connect(f1); os.connect(f2); f1.connect(mix); f2.connect(mix); mix.connect(g);
+    for(let i=0;i<22;i++){ const ti = t + i*dur/22 + Math.random()*0.02; g.gain.setValueAtTime(0, ti); g.gain.linearRampToValueAtTime(0.1*(0.4 + Math.random()*0.6), ti + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, ti + 0.04 + Math.random()*0.05); }
+    this._out(g, {wet:0.5, lp:2600}); os.start(t); os.stop(t + dur + 0.1);
+  },
+  swell(dur){                                                        // 逆再生のように膨らむ緊張(直前の静寂とセット)
+    if(!this.on) return; const ctx = this.ctx, t = this.now(0), s = ctx.createBufferSource(); s.buffer = this.noiseBuf;
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2; f.frequency.setValueAtTime(220, t); f.frequency.exponentialRampToValueAtTime(2200, t + dur);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + dur - 0.02); g.gain.linearRampToValueAtTime(0, t + dur);
+    s.connect(f); f.connect(g); this._out(g, {wet:0.4, lp:5000}); s.start(t, 0); s.stop(t + dur + 0.05);
+    this._thump(t, 40, 64, dur, 0.4, {wet:0.1});
+  },
+  slam(){                                                            // 最後の一撃:広帯域の衝撃+長い残響
+    if(!this.on) return; const ctx = this.ctx, t = this.now(0);
+    const s = ctx.createBufferSource(); s.buffer = this.noiseBuf;
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 450; f.Q.value = 0.6;
+    const ws = ctx.createWaveShaper(); const cur = new Float32Array(257); for(let i=0;i<257;i++){ const x = i/128 - 1; cur[i] = Math.tanh(x*4); } ws.curve = cur;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.9, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+    s.connect(f); f.connect(ws); ws.connect(g); this._out(g, {wet:0.9, lp:3200}); s.start(t, 0.3); s.stop(t + 0.6);
+    this._thump(t, 120, 24, 0.9, 1.0, {wet:0.6}); this._ring(t, [183, 291, 433, 611], 2.2, 0.09, {wet:1});
+  },
+  breath(pan){                                                       // 背後の息づかい
+    if(!this.on) return; const ctx = this.ctx, t = this.now(0), s = ctx.createBufferSource(); s.buffer = this.noiseBuf;
+    const a = ctx.createBiquadFilter(); a.type = 'bandpass'; a.frequency.value = 900; a.Q.value = 2;
+    const b = ctx.createBiquadFilter(); b.type = 'bandpass'; b.frequency.value = 2400; b.Q.value = 3;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.14, t + 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+    s.connect(a); s.connect(b); const m = ctx.createGain(); m.gain.value = 0.7; a.connect(m); b.connect(m); m.connect(g);
+    this._out(g, {dry:0.7, wet:0.6, pan:pan || 0.4, lp:3000}); s.start(t, Math.random()); s.stop(t + 1.7);
+  }
+};
+const vib = p => { try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} };
+
+/* ============================================================
+   WALK EXPERIENCE (three.js / WebGL)
+   廊下は x:±1.3 / y:0〜2.7 / z:+4〜-L。カメラは -z 方向へ歩く。
+   ============================================================ */
+const E = {
+  running:false, holding:false, camZ:0, vel:0, bobPh:0, t:0, p:0, freeze:0, L:CONFIG.CORRIDOR_LEN,
+  light:1, black:null, fig:{active:false, base:16, dist:16, jx:0, jr:0, jt:0}, second:false, echoLeft:0, echoT:0, stepT:0,
+  heart:false, heartT:0, pulse:0, ended:false, endT:0, endStage:0, hintGone:false, startMs:0, glitch:0,
+  w:0, h:0, dpr:1, raf:0, last:0, subTimer:0, px:0.5, yaw:0, tsFlag:-1, X:null, ov:null, og:null, stat:null, noiseCv:null, noiseN:0
+};
+
+const rnd = (a,b) => a + Math.random()*(b-a);
+
+/* ---------- 手続き型テクスチャ ---------- */
+function mkTex(size, draw, rx, ry){
+  const THREE = window.THREE;
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d'); draw(g, size);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx||1, ry||1);
+  t.anisotropy = 4; return t;
+}
+function blotch(g, s, x, y, r, col){
+  for(const dx of [-s,0,s]) for(const dy of [-s,0,s]){
+    const cx = x+dx, cy = y+dy;
+    if(cx+r < 0 || cx-r > s || cy+r < 0 || cy-r > s) continue;
+    const gr = g.createRadialGradient(cx,cy,0,cx,cy,r); gr.addColorStop(0,col); gr.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle = gr; g.fillRect(cx-r,cy-r,r*2,r*2);
+  }
+}
+function paintWall(g, s){
+  const d = s*0.62;
+  let gr = g.createLinearGradient(0,0,0,d); gr.addColorStop(0,'#737b6e'); gr.addColorStop(1,'#858d7f');
+  g.fillStyle = gr; g.fillRect(0,0,s,d);
+  gr = g.createLinearGradient(0,d,0,s); gr.addColorStop(0,'#3f4a3b'); gr.addColorStop(1,'#323b2f');
+  g.fillStyle = gr; g.fillRect(0,d,s,s-d);
+  g.fillStyle = 'rgba(205,210,192,.55)'; g.fillRect(0,d-2,s,3);
+  g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(0,d+1,s,3);
+  for(let i=0;i<110;i++) blotch(g,s,rnd(0,s),rnd(0,s),rnd(20,90), Math.random()<0.6 ? 'rgba(10,12,8,.07)' : 'rgba(210,214,196,.05)');
+  for(let i=0;i<9;i++){                                         // 雨垂れのような汚れ
+    const x = rnd(0,s), len = rnd(s*0.15,s*0.5), w = rnd(3,10);
+    const lg = g.createLinearGradient(0,0,0,len); lg.addColorStop(0,'rgba(20,18,10,.28)'); lg.addColorStop(1,'rgba(20,18,10,0)');
+    g.save(); g.translate(x,0); g.fillStyle = lg; g.fillRect(-w/2,0,w,len); g.restore();
+  }
+  g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 1;                // ひび
+  for(let i=0;i<3;i++){ let x = rnd(40,s-40), y = rnd(20,s*0.5); g.beginPath(); g.moveTo(x,y); for(let k=0;k<10;k++){ x += rnd(-12,12); y += rnd(8,24); g.lineTo(x,y); } g.stroke(); }
+  for(let i=0;i<2600;i++){ g.fillStyle = Math.random()<0.5 ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.04)'; g.fillRect(rnd(0,s),rnd(0,s),rnd(1,2.5),rnd(1,2.5)); }
+  gr = g.createLinearGradient(0,s*0.9,0,s); gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(1,'rgba(0,0,0,.35)');
+  g.fillStyle = gr; g.fillRect(0,s*0.9,s,s*0.1);
+}
+function paintFloor(g, s){
+  const n = 4, t = s/n;
+  for(let i=0;i<n;i++) for(let j=0;j<n;j++){ g.fillStyle = (i+j)%2 ? '#7a7a72' : '#8b8b82'; g.fillRect(i*t,j*t,t,t); }
+  g.fillStyle = 'rgba(15,15,13,.75)';
+  for(let i=0;i<=n;i++){ g.fillRect(i*t-1.5,0,3,s); g.fillRect(0,i*t-1.5,s,3); }
+  for(let i=0;i<90;i++) blotch(g,s,rnd(0,s),rnd(0,s),rnd(15,70),'rgba(8,8,6,.10)');
+  for(let i=0;i<40;i++){ g.strokeStyle = 'rgba(230,230,220,.08)'; g.lineWidth = rnd(1,3); g.beginPath(); const x = rnd(0,s), y = rnd(0,s); g.moveTo(x,y); g.lineTo(x+rnd(-70,70), y+rnd(-70,70)); g.stroke(); }
+  for(let i=0;i<2000;i++){ g.fillStyle = 'rgba(0,0,0,.08)'; g.fillRect(rnd(0,s),rnd(0,s),2,2); }
+}
+function paintCeil(g, s){
+  g.fillStyle = '#8f8f87'; g.fillRect(0,0,s,s);
+  const n = 4, t = s/n;
+  g.fillStyle = 'rgba(20,20,18,.7)'; for(let i=0;i<=n;i++){ g.fillRect(i*t-1.5,0,3,s); g.fillRect(0,i*t-1.5,s,3); }
+  for(let i=0;i<60;i++) blotch(g,s,rnd(0,s),rnd(0,s),rnd(15,60),'rgba(40,30,10,.12)');
+  for(let i=0;i<1800;i++){ g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(rnd(0,s),rnd(0,s),1.5,1.5); }
+}
+function paintFigure(g, w, h){
+  g.clearRect(0,0,w,h);
+  // 髪(ボブ)
+  g.fillStyle = '#aeabb8';
+  g.beginPath(); g.moveTo(62,150); g.bezierCurveTo(52,58,100,32,128,32); g.bezierCurveTo(158,32,206,58,196,150);
+  g.lineTo(202,198); g.lineTo(186,184); g.lineTo(178,208); g.lineTo(160,182); g.lineTo(96,182); g.lineTo(80,208); g.lineTo(70,184); g.lineTo(54,198); g.closePath(); g.fill();
+  // 顔
+  g.fillStyle = '#d4cdd1'; g.beginPath(); g.ellipse(128,132,35,40,0,0,6.2832); g.fill();
+  g.fillStyle = 'rgba(40,20,30,.22)'; g.beginPath(); g.ellipse(128,148,35,26,0,0,6.2832); g.fill();
+  // 前髪(目を半分隠す)
+  g.fillStyle = '#bcb9c6';
+  g.beginPath(); g.moveTo(56,94); g.lineTo(200,94); g.lineTo(194,152); g.lineTo(174,118); g.lineTo(152,150); g.lineTo(134,114); g.lineTo(112,152); g.lineTo(94,116); g.lineTo(68,150); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(90,88,104,.55)'; g.lineWidth = 1.6;
+  for(let i=0;i<26;i++){ const x = 62 + i*5.4; g.beginPath(); g.moveTo(x,44 + Math.abs(i-13)*2); g.lineTo(x + (Math.random()-0.5)*8, 150 + (Math.random()-0.5)*20); g.stroke(); }
+  g.fillStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.ellipse(112,64,26,9,-0.3,0,6.2832); g.fill();
+  // 目:片方は暗い穴、もう片方は赤く光る
+  g.fillStyle = '#17141a'; g.beginPath(); g.ellipse(106,140,8,5,0,0,6.2832); g.fill();
+  g.fillStyle = '#7a1014'; g.beginPath(); g.ellipse(148,140,9,6.5,0,0,6.2832); g.fill();
+  g.fillStyle = '#ff4a3c'; g.beginPath(); g.arc(148,140,4.2,0,6.2832); g.fill();
+  // バツ印のヘアピン
+  g.fillStyle = '#121116';
+  g.fillRect(168,62,24,6.5); g.fillRect(176.5,53,6.5,24); g.fillRect(184,90,20,5.5); g.fillRect(191,83,5.5,20);
+  // フーディー(高い襟で口元を隠す)
+  g.fillStyle = '#08080a';
+  g.beginPath(); g.moveTo(58,178); g.lineTo(88,152); g.quadraticCurveTo(128,184,168,152); g.lineTo(198,178); g.lineTo(214,332); g.lineTo(182,508); g.lineTo(76,508); g.lineTo(42,332); g.closePath(); g.fill();
+  g.fillStyle = '#17171b'; g.beginPath(); g.moveTo(88,152); g.quadraticCurveTo(128,184,168,152); g.lineTo(176,172); g.quadraticCurveTo(128,208,80,172); g.closePath(); g.fill();
+  // 手(胸の前で袖口から)
+  g.fillStyle = '#d9d3d6'; g.beginPath(); g.ellipse(94,310,17,12,0.2,0,6.2832); g.ellipse(162,310,17,12,-0.2,0,6.2832); g.fill();
+  // 赤い滴り
+  g.fillStyle = 'rgba(130,10,14,.85)';
+  for(const [x,y,l] of [[78,200,40],[176,204,62],[120,196,28]]){ g.fillRect(x,y,3,l); g.beginPath(); g.arc(x+1.5,y+l,3.6,0,6.2832); g.fill(); }
+}
+function paintScrawl(g, w, h){
+  g.clearRect(0,0,w,h);
+  const no = 'No.' + visitorNo();
+  g.fillStyle = 'rgba(160,18,22,.95)'; g.strokeStyle = 'rgba(160,18,22,.9)';
+  g.font = '800 104px "Shippori Mincho","Noto Serif CJK JP",serif'; g.textBaseline = 'alphabetic';
+  g.save(); g.translate(30,122); g.rotate(-0.04); g.fillText(no,0,0); g.restore();
+  g.font = '700 46px "Shippori Mincho","Noto Serif CJK JP",serif';
+  g.save(); g.translate(70,190); g.rotate(0.03); g.fillText('ここにいる',0,0); g.restore();
+  g.font = '700 30px "Shippori Mincho","Noto Serif CJK JP",serif';
+  g.save(); g.translate(270,240); g.rotate(-0.02); g.fillText('ずっと、いた',0,0); g.restore();
+  g.lineWidth = 3.2;
+  [[78,130,64],[160,124,96],[226,130,48],[320,122,80],[392,128,44]].forEach(([px,py,len]) => {
+    g.beginPath(); g.moveTo(px,py); g.lineTo(px+rnd(-2,2), py+len); g.stroke();
+    g.beginPath(); g.arc(px,py+len,3.6,0,6.2832); g.fill();
+  });
+}
+function glowTex(){
+  const THREE = window.THREE, c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+  const gr = g.createRadialGradient(64,64,0,64,64,64); gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(0.25,'rgba(255,255,255,.45)'); gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0,0,128,128); return new THREE.CanvasTexture(c);
+}
+
+/* ---------- 3D シーン構築 ---------- */
+function build3D(){
+  const THREE = window.THREE; if(!THREE) return null;
+  let renderer;
+  try{
+    renderer = new THREE.WebGLRenderer({canvas:$('cv'), antialias:true, powerPreference:'high-performance', preserveDrawingBuffer:true});
+  }catch(e){ return null; }
+  const L = E.L, X = {renderer, fixtures:[], lights:[], glows:[]};
+  const scene = X.scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x050506, 0.105);
+  renderer.setClearColor(0x050506, 1);
+  const camera = X.camera = new THREE.PerspectiveCamera(72, 1, 0.05, 90);
+  camera.rotation.order = 'YXZ';
+
+  const len = L + 4, cz = (4 - L)/2;
+  const wallT = mkTex(512, paintWall, len/2.7, 1);
+  const floorT = mkTex(512, paintFloor, 2.6/2.4, len/2.4);
+  const ceilT = mkTex(512, paintCeil, 2.6/2.4, len/2.4);
+  const wallM = new THREE.MeshStandardMaterial({map:wallT, roughness:0.92, metalness:0});
+  const wallL = new THREE.Mesh(new THREE.PlaneGeometry(len,2.7), wallM); wallL.rotation.y = Math.PI/2; wallL.position.set(-1.3,1.35,cz);
+  const wallR = new THREE.Mesh(new THREE.PlaneGeometry(len,2.7), wallM); wallR.rotation.y = -Math.PI/2; wallR.position.set(1.3,1.35,cz);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(2.6,len), new THREE.MeshStandardMaterial({map:floorT, roughness:0.52, metalness:0.04}));
+  floor.rotation.x = -Math.PI/2; floor.position.set(0,0,cz);
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(2.6,len), new THREE.MeshStandardMaterial({map:ceilT, roughness:0.95}));
+  ceil.rotation.x = Math.PI/2; ceil.position.set(0,2.7,cz);
+  const endWall = new THREE.Mesh(new THREE.PlaneGeometry(2.6,2.7), new THREE.MeshStandardMaterial({map:wallT.clone(), roughness:0.95}));
+  endWall.material.map.repeat.set(1,1); endWall.material.map.needsUpdate = true; endWall.position.set(0,1.35,-L);
+  scene.add(wallL, wallR, floor, ceil, endWall);
+
+  // 光(あとで必要な分だけ PointLight を割り当てる)
+  X.hemi = new THREE.HemisphereLight(0x8a9486, 0x151512, 0.3); scene.add(X.hemi);
+  for(let i=0;i<4;i++){ const pl = new THREE.PointLight(0xe6ecd8, 1.6, 11, 2); pl.position.set(0,2.35,-3); scene.add(pl); X.lights.push(pl); }
+  const gT = glowTex();
+  const addGlow = (x,y,z,size,color,op) => {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({map:gT, color, blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, fog:false, opacity:op}));
+    s.position.set(x,y,z); s.scale.set(size,size,1); scene.add(s); return s;
+  };
+
+  // 天井灯(蛍光灯パネル)
+  for(let i=0;i<9;i++){
+    const m = new THREE.MeshBasicMaterial({color:0xfbffee, fog:true});
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(0.55,1.3), m); p.rotation.x = Math.PI/2; p.position.set(0,2.69,-(3+5*i));
+    const fr = new THREE.Mesh(new THREE.PlaneGeometry(0.7,1.45), new THREE.MeshBasicMaterial({color:0x1a1a18, fog:true})); fr.rotation.x = Math.PI/2; fr.position.set(0,2.695,-(3+5*i));
+    scene.add(fr, p); X.fixtures.push({z:-(3+5*i), mat:m, on:1});
+  }
+
+  // 壁の扉・標識
+  const frameM = new THREE.MeshStandardMaterial({color:0x8f8f86, roughness:0.8});
+  const addDoor = (z, side, kind) => {
+    const g = new THREE.Group(), red = kind === 'doorred';
+    const leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.95,2.1), red ? new THREE.MeshBasicMaterial({color:0x2e0707, fog:true}) : new THREE.MeshStandardMaterial({color:0x0b0b0a, roughness:0.9}));
+    leaf.position.set(0,1.05,0);
+    const fT = new THREE.Mesh(new THREE.BoxGeometry(1.1,0.07,0.07), frameM); fT.position.set(0,2.13,0.03);
+    const fL = new THREE.Mesh(new THREE.BoxGeometry(0.07,2.2,0.07), frameM); fL.position.set(-0.52,1.1,0.03);
+    const fR = fL.clone(); fR.position.x = 0.52;
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(0.2,0.34), new THREE.MeshBasicMaterial({color: red ? 0xa01410 : 0x1a2020, fog:true})); win.position.set(0,1.55,0.01);
+    g.add(leaf,fT,fL,fR,win);
+    g.position.set(side*1.28, 0, -z); g.rotation.y = side < 0 ? Math.PI/2 : -Math.PI/2; scene.add(g);
+    if(red) X.glows.push(addGlow(side*1.1, 1.3, -z, 1.6, 0xff2a1c, 0.22));
+  };
+  addDoor(6,-1,'door'); addDoor(10,1,'door'); addDoor(19,1,'doorred'); addDoor(30,1,'door'); addDoor(34,-1,'doorred'); addDoor(38,1,'door'); addDoor(41,-1,'door');
+  // 非常口の標識
+  {
+    const e = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.18,0.06), new THREE.MeshBasicMaterial({color:0xcc2a22, fog:true}));
+    e.position.set(-1.27, 2.3, -15); e.rotation.y = Math.PI/2; scene.add(e); addGlow(-1.1, 2.3, -15, 0.9, 0xff3022, 0.35);
+  }
+  // 待合室の椅子(左壁)
+  const chairM = new THREE.MeshStandardMaterial({color:0x17191a, roughness:0.75});
+  const addChair = (z) => {
+    const c = new THREE.Group();
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.46,0.05,0.44), chairM); seat.position.set(0,0.45,0);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(0.46,0.42,0.04), chairM); back.position.set(0,0.7,-0.2);
+    c.add(seat, back);
+    for(const [x,zz] of [[-0.2,-0.18],[0.2,-0.18],[-0.2,0.18],[0.2,0.18]]){ const l = new THREE.Mesh(new THREE.BoxGeometry(0.03,0.45,0.03), chairM); l.position.set(x,0.22,zz); c.add(l); }
+    c.position.set(-1.0, 0, -z); c.rotation.y = Math.PI/2; scene.add(c);
+  };
+  [11.3,12.1,12.9,25,26].forEach(addChair);
+
+  // 壁の書き込み
+  X.scrawlCv = document.createElement('canvas'); X.scrawlCv.width = 512; X.scrawlCv.height = 256;
+  X.scrawlTex = new THREE.CanvasTexture(X.scrawlCv);
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(2.4,1.2), new THREE.MeshStandardMaterial({map:X.scrawlTex, transparent:true, roughness:0.9, emissive:0x330000, emissiveMap:X.scrawlTex}));
+  scr.rotation.y = Math.PI/2; scr.position.set(-1.29, 1.3, -27.5); scene.add(scr);
+
+  // 最奥の扉
+  X.doorGroup = new THREE.Group(); X.doorGroup.position.set(0,0,-L+0.03);
+  X.doorLeaf = new THREE.Mesh(new THREE.PlaneGeometry(1.1,2.2), new THREE.MeshStandardMaterial({color:0x3b0f0f, roughness:0.6, metalness:0.35, emissive:0x200404}));
+  X.doorLeaf.position.set(0,1.1,0);
+  const dwin = new THREE.Mesh(new THREE.PlaneGeometry(0.22,0.36), new THREE.MeshBasicMaterial({color:0xff3a2a})); dwin.position.set(0,1.6,0.01);
+  const dframe = new THREE.Mesh(new THREE.BoxGeometry(1.3,2.3,0.05), new THREE.MeshStandardMaterial({color:0x151010, roughness:0.8})); dframe.position.set(0,1.15,-0.04);
+  X.doorGroup.add(dframe, X.doorLeaf, dwin); scene.add(X.doorGroup);
+  X.openPlane = new THREE.Mesh(new THREE.PlaneGeometry(1.1,2.2), new THREE.MeshBasicMaterial({color:0xffffff, fog:false})); X.openPlane.position.set(0,1.1,-L+0.02); X.openPlane.visible = false; scene.add(X.openPlane);
+  X.doorLight = new THREE.PointLight(0xff2418, 1.2, 14, 2); X.doorLight.position.set(0,1.3,-L+1.3); scene.add(X.doorLight);
+  X.doorGlow = addGlow(0,1.2,-L+0.4,5.5,0xff2418,0.55);
+
+  // 影(エンティティ)
+  const fgc = document.createElement('canvas'); fgc.width = 256; fgc.height = 512; paintFigure(fgc.getContext('2d'), 256, 512);
+  const fgt = new THREE.CanvasTexture(fgc);
+  const grp = new THREE.Group();
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.78,1.56), new THREE.MeshBasicMaterial({map:fgt, transparent:true, fog:true, depthWrite:false}));
+  mesh.position.set(0,0.78,0);
+  const eye = new THREE.Sprite(new THREE.SpriteMaterial({map:gT, color:0xff2a22, blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, fog:false, opacity:0.9}));
+  eye.position.set(0.055, 1.17, 0.02); eye.scale.set(0.42,0.42,1);
+  grp.add(mesh, eye); grp.visible = false; scene.add(grp);
+  X.fig = {group:grp, mesh, eye};
+  return X;
+}
+
+function resizeStage(){
+  const X = E.X, r = $('col').getBoundingClientRect();
+  E.dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  E.w = Math.max(200, Math.round(r.width)); E.h = Math.max(300, Math.round(r.height));
+  X.renderer.setPixelRatio(E.dpr); X.renderer.setSize(E.w, E.h, false);
+  X.camera.aspect = E.w/E.h; X.camera.fov = X.camera.aspect < 0.8 ? 80 : 66; X.camera.updateProjectionMatrix();
+  const ov = E.ov; ov.width = Math.round(E.w*E.dpr); ov.height = Math.round(E.h*E.dpr);
+  E.og.setTransform(E.dpr,0,0,E.dpr,0,0);
+  // 固定レイヤ(ビネット+走査線)
+  const st = document.createElement('canvas'); st.width = ov.width; st.height = ov.height; const sg = st.getContext('2d'); sg.scale(E.dpr,E.dpr);
+  const gr = sg.createRadialGradient(E.w/2,E.h*0.47,Math.min(E.w,E.h)*0.2,E.w/2,E.h*0.47,Math.max(E.w,E.h)*0.78);
+  gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(1,'rgba(0,0,0,.9)'); sg.fillStyle = gr; sg.fillRect(0,0,E.w,E.h);
+  sg.fillStyle = 'rgba(0,0,0,.13)'; for(let y=0;y<E.h;y+=3) sg.fillRect(0,y,E.w,1);
+  E.stat = st;
+}
+function makeNoise(){
+  const c = document.createElement('canvas'); c.width = c.height = 96; const x = c.getContext('2d'), id = x.createImageData(96,96);
+  for(let i=0;i<id.data.length;i+=4){ const v = Math.random()*255; id.data[i]=id.data[i+1]=id.data[i+2]=v; id.data[i+3]=255; }
+  x.putImageData(id,0,0); return c;
+}
+
+/* ---------- 毎フレームの描画 ---------- */
+function lightLevelAt(){
+  let L = 1 - 0.34*E.p;
+  const b = E.black;
+  if(b){
+    const t = b.t; let v;
+    if(t < 0.28) v = (Math.floor(t*30) % 2 === 0) ? 0.9 : 0.12;
+    else if(t < 1.45) v = 0;
+    else if(t < 2.5){ const pat = [1,0,0,1,0,1,1,0,0,0,1,1,0,1,1,1]; v = pat[Math.min(pat.length-1, Math.floor((t-1.45)*15))] ? 0.85 : 0; }
+    else v = 1;
+    L *= v;
+  } else { L *= (Math.random() < 0.012 ? 0.45 : 1); }
+  return L;
+}
+
+function render3D(){
+  const X = E.X, cam = X.camera, L = E.L;
+  const bobA = clamp(E.vel, 0, 1.6);
+  cam.position.set(Math.cos(E.bobPh*0.5)*0.025*bobA + Math.sin(E.t*0.6)*0.008, 1.55 + Math.sin(E.bobPh)*0.035*bobA, -E.camZ);
+  const tgtYaw = E.holding ? (0.5 - E.px)*0.32 : 0; E.yaw += (tgtYaw - E.yaw)*0.08;
+  const near = E.fig.active && E.fig.dist < 4;
+  const trem = near ? (Math.random()-0.5)*0.008 : 0;
+  cam.rotation.set(-0.02 + trem, E.yaw + Math.sin(E.t*0.35)*0.008, Math.sin(E.bobPh*0.5)*0.008*bobA + trem*2);
+
+  const dim = 1 - 0.3*E.p;
+  // 蛍光灯の状態
+  X.fixtures.forEach((f,i) => {
+    let on = E.light;
+    if(i === 3) on *= (Math.sin(E.t*23) + Math.sin(E.t*37.3) > 0.2) ? 1 : 0.12;        // 死にかけの灯
+    if(i === 5 && E.p > 0.4) on *= (Math.random() < 0.5 ? 1 : 0.2);
+    f.on = clamp(on, 0, 1);
+    const v = 0.08 + 0.92*f.on; f.mat.color.setRGB(v*0.98, v, v*0.93);
+  });
+  const li = Math.floor((E.camZ - 3)/5), used = {};
+  X.lights.forEach((pl,k) => {
+    const idx = clamp(li + k, 0, X.fixtures.length-1);
+    if(used[idx]){ pl.intensity = 0; return; }
+    used[idx] = 1; const f = X.fixtures[idx];
+    pl.position.set(0, 2.3, f.z); pl.intensity = 1.55 * f.on * dim;
+  });
+  X.hemi.intensity = 0.03 + 0.3*E.light*dim;
+
+  const doorNear = clamp((E.camZ - (L-22))/22, 0, 1);
+  X.doorLight.intensity = (0.5 + 2.4*doorNear) * (E.black && E.light < 0.05 ? 0.7 : 1) * (0.92 + 0.08*Math.random());
+  X.doorGlow.material.opacity = (0.35 + 0.45*doorNear) * (0.9 + 0.1*Math.random()); const gs = 4.5 + 3*doorNear; X.doorGlow.scale.set(gs,gs,1);
+  X.glows.forEach(s => { s.material.opacity = 0.15 + 0.14*E.p + (E.light > 0.05 ? 0 : 0.1); });
+  X.scene.fog.density = 0.105 + 0.025*E.p;
+
+  // 影
+  const F = E.fig, fg = X.fig;
+  fg.group.visible = F.active;
+  if(F.active){
+    if(E.t - F.jt > 0.11){ F.jt = E.t; F.jx = (Math.random()-0.5)*0.05; F.jr = (Math.random()-0.5)*0.1; }
+    fg.group.position.set(F.jx, 0, -(E.camZ + F.dist));
+    fg.group.rotation.y = Math.atan2(cam.position.x - fg.group.position.x, cam.position.z - fg.group.position.z);
+    fg.group.rotation.z = F.jr*0.5;
+    const dark = E.light < 0.08;
+    fg.mesh.visible = !dark && !(E.light < 0.5 && Math.random() < 0.35);
+    fg.eye.material.opacity = dark ? 0.95 : 0.55;
+  }
+  // ゴール演出
+  if(E.ended){
+    X.openPlane.visible = E.endStage === 0 && E.endT > 0.5;
+    X.doorLeaf.visible = !(E.endStage > 0 || E.endT > 0.5);
+  } else { X.openPlane.visible = false; X.doorLeaf.visible = true; }
+
+  X.renderer.render(X.scene, cam);
+}
+
+function glitchSlices(n){
+  const og = E.og, cv = $('cv'), d = E.dpr;
+  for(let i=0;i<n;i++){
+    const sy = Math.random()*E.h, sh = 6 + Math.random()*E.h*0.12, off = (Math.random()*2-1) * E.w*0.14;
+    try{ og.drawImage(cv, 0, sy*d, cv.width, sh*d, off, sy, E.w, sh); }catch(e){}
+  }
+}
+function drawOverlay(){
+  const og = E.og;
+  og.clearRect(0,0,E.w,E.h);
+  if(!RM && (E.glitch > 0.05 || (E.p > 0.5 && Math.random() < 0.02))) glitchSlices(2 + (E.glitch*6|0));
+  if(E.pulse > 0.01){ og.fillStyle = 'rgba(130,0,0,' + (E.pulse*0.3) + ')'; og.fillRect(0,0,E.w,E.h); }
+  if(!E.noiseCv || (++E.noiseN % 3 === 0)){ E.noiseCv = makeNoise(); E.noisePat = og.createPattern(E.noiseCv,'repeat'); }
+  og.save(); og.globalAlpha = 0.06 + 0.05*E.p + 0.1*E.glitch; og.globalCompositeOperation = 'overlay';
+  og.translate(Math.random()*40, Math.random()*40); og.fillStyle = E.noisePat; og.fillRect(-40,-40,E.w+80,E.h+80); og.restore();
+  og.drawImage(E.stat, 0, 0, E.w, E.h);
+}
+
+/* ---- 字幕 ---- */
+function sub(text, ms, red){
+  const el = $('sub'); el.textContent = text; el.classList.toggle('red', !!red); el.classList.add('on');
+  clearTimeout(E.subTimer); E.subTimer = setTimeout(() => el.classList.remove('on'), ms || 3200);
+}
+function blackout(figDist){ E.black = {t:0, fd:figDist, sting:false, shown:false}; E.freeze = 2.0; E.glitch = 1; }
+
+/* ---- イベント年表(進行度 p に応じて発火) ---- */
+const EVENTS = [
+  {p:0.02, run(){ sub('入口は、もう見えない。', 3400); }},
+  {p:0.12, run(){ sub('蛍光灯の音だけが、している。', 3400); }},
+  {p:0.22, run(){ E.second = true; sub('足音が、二つ聞こえる。', 3600); }},
+  {p:0.33, run(){ blackout(17); setTimeout(()=>sub('止まっても、足音は止まらない。', 3800), 2400); }},
+  {p:0.48, run(){ sub('……さっき、あそこに誰かいた。', 3600); }},
+  {p:0.56, run(){ blackout(10); setTimeout(()=>sub('近づいている。', 3000, true), 2500); }},
+  {p:0.62, run(){ sub('壁に、あなたの番号が書いてある。', 4200, true); }},
+  {p:0.78, run(){ E.heart = true; blackout(5.2); setTimeout(()=>sub('戻る道は、もうない。', 3600, true), 2500); }},
+  {p:0.90, run(){ E.fig.base = 3.4; sub('扉の前に、誰かが立っている。', 4200, true); }}
+];
+
+function update(dt){
+  E.t += dt;
+  if(E.black){
+    const b = E.black; b.t += dt;
+    if(!b.sting && b.t > 0.28){ b.sting = true; AU.powerDown(); vib([60,40,120]); }
+    if(!b.shown && b.t > 1.45){ b.shown = true; E.fig.active = true; E.fig.base = b.fd; E.fig.dist = b.fd; }
+    if(b.t > 2.6) E.black = null;
+  }
+  E.light = lightLevelAt();
+  { const lit = E.light > 0.2; if(E.lastLit !== undefined && lit !== E.lastLit && E.running) AU.tick(lit); E.lastLit = lit; }
+  E.glitch = Math.max(0, E.glitch - dt*0.9);
+  E.pulse = Math.max(0, E.pulse - dt*2.2);
+  if(E.ended){ endSequence(dt); return; }
+
+  E.freeze = Math.max(0, E.freeze - dt);
+  const target = (E.holding && E.freeze <= 0) ? CONFIG.SPEED : 0;
+  E.vel += (target - E.vel) * Math.min(1, dt*4);
+  const prev = E.camZ;
+  E.camZ = Math.min(E.camZ + E.vel*dt, E.L - 1.7);
+  E.bobPh += (E.camZ - prev) * 7.5;
+  E.p = clamp(E.camZ / (E.L - 1.7), 0, 1);
+  for(const ev of EVENTS){ if(!ev.done && E.p >= ev.p){ ev.done = true; ev.run(); } }
+
+  if(E.vel > 0.35){
+    E.stepT += dt;
+    if(E.stepT >= 0.52){ E.stepT = 0; AU.step(true, 0); if(E.second) AU.step(false, 0.26); }
+  } else if(E.vel < 0.1){ E.stepT = 0.4; }
+  if(E.echoLeft > 0){
+    E.echoT -= dt;
+    if(E.echoT <= 0){ AU.step(false, 0); E.echoLeft--; E.echoT = 0.5; if(E.echoLeft === 0 && E.fig.active) E.glitch = Math.max(E.glitch, 0.3); }
+  }
+  if(E.fig.active){
+    const tgt = E.holding ? E.fig.base : Math.max(E.fig.base*0.5, 1.8);
+    E.fig.dist += (tgt - E.fig.dist) * Math.min(1, dt * (E.holding ? 0.8 : 0.35));
+  }
+  if(E.heart){
+    E.heartT -= dt;
+    if(E.heartT <= 0){ AU.beat(0); E.pulse = 1; vib(40); E.heartT = 1.05 - 0.4*clamp((E.p-0.78)/0.22,0,1); }
+  }
+  AU.level(0.02 + 0.1*E.p + (E.black ? 0.05 : 0), E.light > 0.1 ? 0.016 + 0.006*E.p : 0, 0.03 + 0.02*E.p);
+  // 環境音:遠くのダクトや扉(間隔は進むほど短く)
+  if(E.p > 0.04 && !E.black){
+    E.ambT = (E.ambT === undefined ? 6 : E.ambT) - dt;
+    if(E.ambT <= 0){ const pan = Math.random() < 0.5 ? -0.6 : 0.6; if(Math.random() < 0.6) AU.knock(pan); else AU.farDoor(pan); E.ambT = (7 + Math.random()*7) * (1 - 0.4*E.p); }
+  }
+  // 止まって、近くに影がいると、息づかいが聞こえる
+  if(!E.holding && E.fig.active && E.fig.dist < 6){ E.stillT = (E.stillT || 0) + dt; if(E.stillT > 2.2){ E.stillT = -6; AU.breath(Math.random() < 0.5 ? -0.4 : 0.4); } } else if(E.holding){ E.stillT = 0; }
+  if((E.t*4|0) !== E.tsFlag){ E.tsFlag = E.t*4|0; updateRec(); }
+
+  if(E.camZ >= E.L - 1.705 && !E.ended){
+    E.ended = true; E.endT = 0; E.holding = false; E.endStage = 0;
+    sub('', 10); AU.level(0, 0, 0.012); AU.creak(0.15); AU.swell(1.5);
+  }
+}
+function updateRec(){
+  const d = new Date();
+  const garbled = E.black || (E.p > 0.7 && Math.random() < 0.08);
+  $('rec-ts').textContent = garbled ? '██.██.██ ██:██:██' : fmtDate(d.getTime()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+}
+
+/* ---- ゴール:扉が開く → 閃光 → 凝視 → 暗転 → 入場記録 ---- */
+function endSequence(dt){
+  E.endT += dt;
+  const t = E.endT, flash = $('flash'), stare = $('stare');
+  E.vel = 0;
+  if(E.endStage === 0){
+    E.light = 0.6 + 0.4*Math.sin(t*40);
+    flash.style.opacity = String(clamp((t-0.4)/1.0, 0, 1) * 0.9);
+    if(t > 1.5){ E.endStage = 1; E.endT = 0; flash.style.opacity = '1'; AU.slam(); vib([200,60,300]); showStare(); }
+  } else if(E.endStage === 1){
+    flash.style.opacity = String(clamp(1 - t/0.25, 0, 1));
+    if(t > 2.1){ E.endStage = 2; E.endT = 0; stare.style.display = 'none'; flash.style.opacity = '1'; flash.style.background = '#000'; }
+  } else if(E.endStage === 2){
+    if(t > 0.9){ E.endStage = 3; finishWalk(); }
+  }
+}
+function showStare(){
+  const st = $('stare'), W = E.w, H = E.h, size = W * 2.1, ih = size * 1400 / 990, fx = 0.40, fy = 0.43;
+  st.style.backgroundImage = 'url("img/cover.jpg")';
+  st.style.backgroundSize = size + 'px ' + ih + 'px';
+  st.style.backgroundPosition = (W/2 - fx*size) + 'px ' + (H/2 - fy*ih) + 'px';
+  st.style.display = 'block';
+}
+
+function loop(ts){
+  if(!E.running) return;
+  const dt = Math.min(0.05, (ts - E.last)/1000 || 0.016); E.last = ts;
+  try{ update(dt); if(E.running){ render3D(); drawOverlay(); } }catch(err){ window.__lastErr = String(err && err.stack || err); }
+  E.raf = requestAnimationFrame(loop);
+}
+
+function startWalk(withSound){
+  if(!E.X){
+    E.ov = $('ov'); E.og = E.ov.getContext('2d');
+    E.X = build3D();
+  }
+  if(!E.X){                                    // WebGL が使えない端末
+    $('gate').classList.remove('on'); goTo('top'); toast('この端末では廊下を表示できません。記録庫から読めます。'); return;
+  }
+  $('gate').classList.remove('on'); $('stage').classList.add('on'); document.body.style.overflow = 'hidden';
+  resizeStage();
+  paintScrawl(E.X.scrawlCv.getContext('2d'), 512, 256); E.X.scrawlTex.needsUpdate = true;
+  Object.assign(E, {running:true, holding:false, camZ:0, vel:0, bobPh:0, t:0, p:0, freeze:0, light:1, black:null, second:false, echoLeft:0, echoT:0,
+    stepT:0.4, heart:false, heartT:0, pulse:0, ended:false, endT:0, endStage:0, glitch:0, tsFlag:-1, hintGone:false, startMs:Date.now(), yaw:0});
+  E.fig = {active:false, base:16, dist:16, jx:0, jr:0, jt:0};
+  EVENTS.forEach(e => { e.done = false; });
+  $('flash').style.opacity = '0'; $('flash').style.background = '#fff'; $('stare').style.display = 'none';
+  $('holdhint').classList.remove('gone'); $('sub').classList.remove('on');
+  $('rec-no').textContent = 'No.' + visitorNo(); updateRec();
+  if(withSound){ AU.init(); AU.resume(); AU.setMuted(false); $('st-mute').textContent = '音 ON'; $('st-mute').style.display = ''; }
+  else { AU.on = false; $('st-mute').style.display = 'none'; }
+  E.last = performance.now(); cancelAnimationFrame(E.raf); E.raf = requestAnimationFrame(loop);
+}
+function stopWalk(){
+  E.running = false; cancelAnimationFrame(E.raf);
+  $('stage').classList.remove('on'); document.body.style.overflow = '';
+  try{ if(AU.ctx){ AU.level(0,0,0); AU.ctx.suspend(); } }catch(e){}
+  E.holding = false;
+}
+function finishWalk(){
+  store.data.crossed = true;
+  store.data.duration = Math.round((Date.now() - E.startMs)/1000);
+  store.save(); stopWalk(); goTo('top');
+}
+
+/* 入力: 押している間だけ進む */
+(function bindInput(){
+  const col = $('col');
+  const down = e => {
+    if(e.target.closest && e.target.closest('button')) return;
+    if(!E.running || E.ended) return;
+    E.holding = true; AU.resume();
+    if(!E.hintGone){ E.hintGone = true; $('holdhint').classList.add('gone'); }
+    if(e.cancelable) e.preventDefault();
+  };
+  const up = () => {
+    if(E.holding && E.second && E.vel > 0.3){ E.echoLeft = 3; E.echoT = 0.35; }
+    E.holding = false;
+  };
+  col.addEventListener('pointermove', e => { const r = col.getBoundingClientRect(); E.px = clamp((e.clientX - r.left)/Math.max(1,r.width), 0, 1); });
+  col.addEventListener('pointerdown', down);
+  window.addEventListener('pointerup', up);
+  window.addEventListener('pointercancel', up);
+  col.addEventListener('contextmenu', e => e.preventDefault());
+  window.addEventListener('keydown', e => { if((e.code === 'Space' || e.code === 'ArrowUp') && E.running && !E.ended){ e.preventDefault(); if(!E.holding){ E.holding = true; AU.resume(); E.hintGone = true; $('holdhint').classList.add('gone'); } } });
+  window.addEventListener('keyup', e => { if(e.code === 'Space' || e.code === 'ArrowUp') up(); });
+  window.addEventListener('resize', () => { if(E.running) resizeStage(); });
+  document.addEventListener('visibilitychange', () => { if(document.hidden){ E.holding = false; } });
+  $('st-skip').addEventListener('click', () => { stopWalk(); goTo('top'); });
+  $('st-mute').addEventListener('click', () => { AU.setMuted(!AU.muted); $('st-mute').textContent = AU.muted ? '音 OFF' : '音 ON'; });
+})();
+
+/* ============================================================
+   GATE / FLOW
+   ============================================================ */
+function issueVisitor(){
+  if(!store.data.visitor){ store.data.visitor = 1 + Math.floor(Math.random()*998); store.save(); }
+}
+function showGate(){
+  issueVisitor();
+  const returning = !!store.data.crossed;
+  $('issued').innerHTML = (returning ? 'おかえりなさい。 ' : 'あなたの番号を発行しました。 ') + 'VISITOR No. <b>' + esc(visitorNo()) + '</b>';
+  $('go-skip').textContent = returning ? '記録庫へ戻る' : 'スキップして記録庫へ';
+  $('gate').classList.add('on');
+  updateHud();
+}
+function startFlow(fromSite){
+  issueVisitor();
+  store.data.entered = Date.now(); store.save();
+  $('go-sound').onclick = () => startWalk(true);
+  if(fromSite){ showGate(); }
+}
+$('go-sound').addEventListener('click', () => { store.data.entered = Date.now(); store.save(); startWalk(true); });
+$('go-mute').addEventListener('click', () => { store.data.entered = Date.now(); store.save(); startWalk(false); });
+$('go-skip').addEventListener('click', () => { $('gate').classList.remove('on'); if(!store.data.entered){ store.data.entered = Date.now(); store.save(); } goTo('top'); });
+$('replay').addEventListener('click', () => { showGate(); });
+
+/* ============================================================
+   INIT
+   ============================================================ */
+store.load();
+try{ window.__E = E; window.__goTo = goTo; }catch(e){}
+(function init(){
+  try{
+    const loc = new URLSearchParams(location.search).get('loc');
+    if(loc){ store.data.loc = loc.replace(/[^\w\-ぁ-んァ-ヶ一-龠]/g,'').slice(0,12).toUpperCase(); store.save(); }
+  }catch(e){}
+  const parts = location.hash.replace('#','').split('/');
+  const route = parts[0], rid = parts[1];
+  if(route && route !== 'top' && VIEWS.includes(route)){
+    issueVisitor(); goTo(route, rid);          // 直リンクは体験を挟まない
+  } else {
+    goTo('top'); showGate();
+  }
+})();
+</script>
+</body>
+</html>
